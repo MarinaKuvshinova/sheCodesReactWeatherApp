@@ -1,5 +1,3 @@
-import React, { useState } from "react";
-
 function Search({ getInfo }) {
     function handleSubmit(e) {
         e.preventDefault();
