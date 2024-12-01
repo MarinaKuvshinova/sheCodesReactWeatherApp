@@ -1,34 +1,55 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Search from "./Search";
 import ShowInfo from "./ShowInfo";
 import axios from "axios";
+import { createCityObject } from "./helpers/createCityObject";
+
+const apiKey = "2980ff43226d67e53abfcdb6d457dcc8";
 
 function Weather() {
     const [info, setInfo] = useState(null);
+    const [isError, setIsError] = useState(false);
 
-    function getInfo(city) {
-        let url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=3a94f3778290bfeee61278505dbbe51d&units=metric`;
+    const setCurrentCity = () => {
+        navigator.geolocation.getCurrentPosition((position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const pathApi = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
 
-        axios
-            .get(url)
-            .then((res) => {
-                const data = JSON.parse(JSON.stringify(res.data));
-                setInfo(data);
-            })
-            .catch((error) => error && setInfo(null));
-    }
+            axios
+                .get(pathApi)
+                .then((res) => {
+                    setIsError(false);
+                    setInfo(createCityObject(res.data));
+                })
+                .catch((error) => {
+                    error && setIsError(true);
+                });
+        });
+    };
+
+    useEffect(() => {
+        setCurrentCity();
+    }, []);
 
     return (
-        <div>
-            <h1>Weather</h1>
-            <Search getInfo={getInfo} />
-            {info && <ShowInfo info={info} />}
-            <p>
-                <a href="https://github.com/MarinaKuvshinova/sheCodesReactWeatherApp">
-                    Open-source
-                </a>{" "}
-                code by Maryna Kuvshynova
-            </p>
+        <div className="row">
+            <Search setInfo={setInfo} setIsError={setIsError} />
+            {(info || isError) && (
+                <ShowInfo
+                    info={info}
+                    isError={isError}
+                    setCurrentCity={setCurrentCity}
+                />
+            )}
+            <div className="col-12">
+                <p>
+                    <a href="https://github.com/MarinaKuvshinova/sheCodesReactWeatherApp">
+                        Open-source code
+                    </a>{" "}
+                    by Maryna Kuvshynova
+                </p>
+            </div>
         </div>
     );
 }
